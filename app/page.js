@@ -1,72 +1,109 @@
-import Link from 'next/link';
+import { MongoClient } from 'mongodb';
 
-export default () => {
+
+export default async () => {
+  const client = new MongoClient("mongodb+srv://gogeonhyeok:qTAB0aDdtRBKocyx@cluster0.smqlq.mongodb.net/?retryWrites=true&w=majority");
+  const database = client.db('ghg-master-api-v1');
+  const items = await database.collection('requestHeaders').aggregate([
+    {
+      '$lookup': {
+        'from': 'requestTypes',
+        'localField': 'requestTypeId',
+        'foreignField': 'requestTypeId',
+        'as': 'requestType'
+      }
+    }, {
+      '$lookup': {
+        'from': 'requestStatuses',
+        'localField': 'lastStatus',
+        'foreignField': 'statusId',
+        'as': 'requestStatus'
+      }
+    }, {
+      '$lookup': {
+        'from': 'requestHeaderSystems', 
+        'localField': 'requestId', 
+        'foreignField': 'requestId', 
+        'as': 'requestHeaderSystems', 
+        'pipeline': [
+          {
+            '$project': {
+              'systemId': 1
+            }
+          }
+        ]
+      }
+    }, {
+      '$addFields': {
+        'requestHeaderSystems': {
+          '$map': {
+            'input': '$requestHeaderSystems', 
+            'as': 'entry', 
+            'in': '$$entry.systemId'
+          }
+        }
+      }
+    }, {
+      '$lookup': {
+        'from': 'masterSystems', 
+        'localField': 'requestHeaderSystems', 
+        'foreignField': 'systemId', 
+        'as': 'masterSystems'
+      }
+    }
+  ]).limit(100).toArray();
   return (
-    <nav style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 24,
-      padding: 24
-    }}>
-      
-      <Link href="/menu">Menu</Link>
-      <Link href="/farm">Farm</Link>
-      <Link href="/restaurant">Restaurant</Link>
-      <Link href="/hotel">Hotel</Link>
-      <section>
-        <h1>ITSM</h1>
-        <ul style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-          padding: 24
-        }}>
-          <li><Link href="/request">Request</Link></li>
-          <li><Link href="/system">System</Link></li>
-          <li><Link href="/standard-code">Standard Code</Link></li>
-          <li><Link href="/support-type">Support Type</Link></li>
-        </ul>
-      </section>
-      <section>
-        <h1>WMS Master</h1>
-        <ul style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-          padding: 24
-        }}>
-          <li><Link href="/company">Company</Link></li>
-          <li><Link href="/center">Center</Link></li>
-          <li><Link href="/contact">Contact</Link></li>
-          <li><Link href="/product">Product</Link></li>
-          <li><Link href="/contact-code">Contact Code</Link></li>
-          <li><Link href="/contact-setting">Contact Setting</Link></li>
-          <li><Link href="/location">Location</Link></li>
-          <li><Link href="/lot">Lot</Link></li>
-          <li><Link href="/pallet">Pallet</Link></li>
-          <li><Link href="/plan-rule">Plan Rule</Link></li>
-          <li><Link href="/serial">Serial</Link></li>
-          <li><Link href="/sku">SKU</Link></li>
-        </ul>
-      </section>
-      <section>
-        <h1>WMS Transactions</h1>
-        <ul style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-          padding: 24
-        }}>
-          <li><Link href="/order">Order</Link></li>
-          <li><Link href="/picking-plan">Picking Plan</Link></li>
-          <li><Link href="/picking">Picking</Link></li>
-          <li><Link href="/gi">GI (Good Issuing)</Link></li>
-          <li><Link href="/gr">GR (Good Receiving)</Link></li>
-          <li><Link href="/put-away-plan">Put-Away Plan</Link></li>
-          <li><Link href="/put-away">Put-Away</Link></li>
-          <li><Link href="/inventory">Inventory</Link></li>
-        </ul>
-      </section>
-    </nav>
+    <div className="px-4 sm:px-6 lg:px-8">
+      <div className="sm:flex sm:items-center">
+        <div className="sm:flex-auto">
+          <h1 className="text-base font-semibold leading-6 text-gray-900">Requests</h1>
+          <p className="mt-2 text-sm text-gray-700">A list of all the requests in your account including their system, title, type and dates.</p>
+        </div>
+        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+          <button type="button" className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Add request</button>
+        </div>
+      </div>
+      <div className="mt-8 flow-root">
+        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+            <table className="min-w-full divide-y divide-gray-300">
+              <thead>
+                <tr>
+                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Type</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">ID</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Subject</th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                    <span className="sr-only">Edit</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {items.map(entry => (
+                  <tr>
+                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{entry.requestType[0] == undefined ? '' : entry.requestType[0].requestTypeDescription}</td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{entry.requestId}</td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <div class="flex items-center">
+                        <div class="ml-0">
+                          <div class="font-medium text-gray-900">{entry.subject}</div>
+                          <div class="mt-2 flex flex-row gap-2">
+                            {entry.masterSystems.map(system => <span class="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">{system.systemName}</span>)}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{entry.requestStatus[0] == undefined ? '' : entry.requestStatus[0].statusDescription}</td>
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                      <a href="#" className="text-indigo-600 hover:text-indigo-900">Edit<span className="sr-only">, Lindsay Walton</span></a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
