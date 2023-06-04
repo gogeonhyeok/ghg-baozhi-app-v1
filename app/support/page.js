@@ -6,6 +6,11 @@ export default async () => {
   const database = client.db('ghg-master-api-v1');
   const items = await database.collection('requestHeaders').aggregate([
     {
+      '$match': {
+        'requestTypeId': 'RET20200102000001'
+      }
+    },
+    {
       '$lookup': {
         'from': 'requestTypes',
         'localField': 'requestTypeId',
@@ -84,7 +89,7 @@ export default async () => {
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-base font-semibold leading-6 text-gray-900">Requests</h1>
+          <h1 className="text-base font-semibold leading-6 text-gray-900">Support Requests</h1>
           <p className="mt-2 text-sm text-gray-700">A list of all the requests in your account including their system, title, type and dates.</p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">

@@ -6,6 +6,11 @@ export default async () => {
   const database = client.db('ghg-master-api-v1');
   const items = await database.collection('requestHeaders').aggregate([
     {
+      '$match': {
+        'requestTypeId': 'RET20200102000002'
+      }
+    },
+    {
       '$lookup': {
         'from': 'requestTypes',
         'localField': 'requestTypeId',
@@ -113,21 +118,21 @@ export default async () => {
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{entry.requestType[0] == undefined ? '' : entry.requestType[0].requestTypeDescription}</td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{entry.requestId}</td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <div className="ml-0">
-                          <div className="font-medium text-gray-900">{entry.subject}</div>
-                          <div className="mt-2 flex flex-row gap-2">
-                            {entry.masterSystems.map(system => <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">{system.systemName}</span>)}
+                      <div class="flex items-center">
+                        <div class="ml-0">
+                          <div class="font-medium text-gray-900">{entry.subject}</div>
+                          <div class="mt-2 flex flex-row gap-2">
+                            {entry.masterSystems.map(system => <span class="inline-flex items-center rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">{system.systemName}</span>)}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{entry.requestStatus[0] == undefined ? '' : entry.requestStatus[0].statusDescription}</td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <div className="ml-0">
-                          <div className="font-medium text-gray-900">{entry.createDate}</div>
-                          <div className="font-medium text-gray-900">{entry.createUser}</div>
+                      <div class="flex items-center">
+                        <div class="ml-0">
+                          <div class="font-medium text-gray-900">{entry.createDate}</div>
+                          <div class="font-medium text-gray-900">{entry.createUser}</div>
                         </div>
                       </div>
                     </td>
